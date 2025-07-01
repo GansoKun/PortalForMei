@@ -129,7 +129,7 @@
   </div>
 
   <script>
-    // Fade-in effect
+    // フェードイン効果
     window.addEventListener("load", () => {
       document.body.classList.add("loaded");
       document.querySelectorAll('.section').forEach(section => {
@@ -137,7 +137,145 @@
       });
     });
 
-    // (以下略) — JavaScriptはそのままです。
+    // Links
+    const linkList = document.getElementById("link-list");
+    function renderLinks() {
+      const links = JSON.parse(localStorage.getItem("links") || "[]");
+      linkList.innerHTML = "";
+      links.forEach((link, index) => {
+        linkList.innerHTML += `
+          <div class="item">
+            <img src="${link.img || 'https://via.placeholder.com/32'}" alt="icon" />
+            <a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.name}</a>
+            <button onclick="deleteLink(${index})">Delete</button>
+          </div>`;
+      });
+    }
+    function addLink() {
+      const name = document.getElementById("link-name").value.trim();
+      const url = document.getElementById("link-url").value.trim();
+      const fileInput = document.getElementById("link-image");
+      if (name && url) {
+        const reader = new FileReader();
+        if (fileInput.files[0]) {
+          reader.onload = function(e) {
+            saveLink(name, url, e.target.result);
+          }
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          saveLink(name, url, "");
+        }
+      }
+    }
+    function saveLink(name, url, img) {
+      const links = JSON.parse(localStorage.getItem("links") || "[]");
+      links.push({name, url, img});
+      localStorage.setItem("links", JSON.stringify(links));
+      renderLinks();
+      document.getElementById("link-name").value = "";
+      document.getElementById("link-url").value = "";
+      document.getElementById("link-image").value = "";
+    }
+    function deleteLink(index) {
+      const links = JSON.parse(localStorage.getItem("links") || "[]");
+      links.splice(index, 1);
+      localStorage.setItem("links", JSON.stringify(links));
+      renderLinks();
+    }
+    renderLinks();
+
+    // Deadlines
+    const deadlineList = document.getElementById("deadline-list");
+    function renderDeadlines() {
+      const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
+      deadlineList.innerHTML = "";
+      const today = new Date();
+      deadlines.forEach((d, index) => {
+        const deadlineDate = new Date(d.date);
+        const diff = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+        let text;
+        if (diff > 0) {
+          text = `${d.title} - ${diff} day(s) left`;
+        } else if (diff === 0) {
+          text = `${d.title} is due today!`;
+        } else {
+          text = `${d.title} - expired`;
+        }
+        deadlineList.innerHTML += `
+          <div class="item">
+            ${text}
+            <button onclick="deleteDeadline(${index})">Delete</button>
+          </div>`;
+      });
+    }
+    function addDeadline() {
+      const title = document.getElementById("deadline-title").value.trim();
+      const date = document.getElementById("deadline-date").value;
+      if (title && date) {
+        const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
+        deadlines.push({title, date});
+        localStorage.setItem("deadlines", JSON.stringify(deadlines));
+        renderDeadlines();
+        document.getElementById("deadline-title").value = "";
+        document.getElementById("deadline-date").value = "";
+      }
+    }
+    function deleteDeadline(index) {
+      const deadlines = JSON.parse(localStorage.getItem("deadlines") || "[]");
+      deadlines.splice(index, 1);
+      localStorage.setItem("deadlines", JSON.stringify(deadlines));
+      renderDeadlines();
+    }
+    renderDeadlines();
+
+    // Memo
+    const memo = document.getElementById("memo");
+    const memoHistory = document.getElementById("memo-history");
+    function renderMemoHistory() {
+      const history = JSON.parse(localStorage.getItem("memoHistory") || "[]");
+      memoHistory.innerHTML = "";
+      history.forEach((m, idx) => {
+        const div = document.createElement("div");
+        div.className = "memo-item";
+        const span = document.createElement("span");
+        span.textContent = m;
+        const btn = document.createElement("button");
+        btn.textContent = "Delete";
+        btn.addEventListener("click", () => {
+          deleteMemo(idx);
+        });
+        div.appendChild(span);
+        div.appendChild(btn);
+        memoHistory.appendChild(div);
+      });
+    }
+    function saveMemo() {
+      const text = memo.value.trim();
+      if (text) {
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        const history = JSON.parse(localStorage.getItem("memoHistory") || "[]");
+        history.push(`${timestamp} : ${text}`);
+        localStorage.setItem("memoHistory", JSON.stringify(history));
+        renderMemoHistory();
+        alert("Saved!");
+        memo.value = "";
+      }
+    }
+    function deleteMemo(index) {
+      const history = JSON.parse(localStorage.getItem("memoHistory") || "[]");
+      history.splice(index, 1);
+      localStorage.setItem("memoHistory", JSON.stringify(history));
+      renderMemoHistory();
+    }
+    function clearMemoHistory() {
+      if (confirm("Are you sure you want to clear all history?")) {
+        localStorage.removeItem("memoHistory");
+        renderMemoHistory();
+        alert("All history cleared!");
+      }
+    }
+    renderMemoHistory();
   </script>
 </body>
 </html>
